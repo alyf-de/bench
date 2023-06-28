@@ -67,16 +67,13 @@ def service(service, option):
 		exec_cmd("sudo {service_manager} {option} {service}".format(service_manager='systemctl', option=option, service=service))
 	elif os.path.basename(get_program(['service']) or '') == 'service':
 		exec_cmd("sudo {service_manager} {service} {option} ".format(service_manager='service', service=service, option=option))
-	else:
-		# look for 'service_manager' and 'service_manager_command' in environment
-		service_manager = os.environ.get("BENCH_SERVICE_MANAGER")
-		if service_manager:
-			service_manager_command = (os.environ.get("BENCH_SERVICE_MANAGER_COMMAND")
-				or "{service_manager} {option} {service}").format(service_manager=service_manager, service=service, option=option)
-			exec_cmd(service_manager_command)
+	elif service_manager := os.environ.get("BENCH_SERVICE_MANAGER"):
+		service_manager_command = (os.environ.get("BENCH_SERVICE_MANAGER_COMMAND")
+			or "{service_manager} {option} {service}").format(service_manager=service_manager, service=service, option=option)
+		exec_cmd(service_manager_command)
 
-		else:
-			raise Exception('No service manager found')
+	else:
+		raise Exception('No service manager found')
 
 def get_supervisor_confdir():
 	possiblities = ('/etc/supervisor/conf.d', '/etc/supervisor.d/', '/etc/supervisord/conf.d', '/etc/supervisord.d')

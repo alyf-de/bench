@@ -63,11 +63,11 @@ def build_vm():
 	check_output(["packer", "build", "vm-develop.json"])
 
 def md5(build, file):
-	return check_output("md5sum '{} Builds/{}'".format(build, file), shell=True).split()[0]
+	return check_output(f"md5sum '{build} Builds/{file}'", shell=True).split()[0]
 
 def move_to_public(build, file):
 	NEW_FILES.append(file)
-	src  = os.path.join('{} Builds/{}'.format(build, file))
+	src = os.path.join(f'{build} Builds/{file}')
 	dest = os.path.join(PUBLIC_DIR, file)
 	os.rename(src, dest)
 	# Make Public folder readable by others
@@ -76,12 +76,12 @@ def move_to_public(build, file):
 
 def generate_md5_hashes():
 	for build in BUILDS:
-		for file in os.listdir('{} Builds'.format(build)):
+		for file in os.listdir(f'{build} Builds'):
 			if file.endswith(".ova") or file.endswith(".box"):
-				with open('{} Builds/{}.md5'.format(build, file), 'w') as f:
+				with open(f'{build} Builds/{file}.md5', 'w') as f:
 					f.write(md5(build, file))
 				move_to_public(build, file)
-				move_to_public(build, '{}.md5'.format(file))
+				move_to_public(build, f'{file}.md5')
 
 def generate_symlinks():
 	for file in NEW_FILES:
@@ -98,19 +98,18 @@ def generate_symlinks():
 				silent_remove(os.path.join(PUBLIC_DIR, 'ERPNext-Dev.ova.md5'))
 				os.symlink(os.path.join(PUBLIC_DIR, file),
 					os.path.join(PUBLIC_DIR, 'ERPNext-Dev.ova.md5'))
-		else: # ova/box files
-			if 'Vagrant' in file:
-				silent_remove(os.path.join(PUBLIC_DIR, 'ERPNext-Vagrant.box'))
-				os.symlink(os.path.join(PUBLIC_DIR, file),
-					os.path.join(PUBLIC_DIR, 'ERPNext-Vagrant.box'))
-			elif 'Production' in file:
-				silent_remove(os.path.join(PUBLIC_DIR, 'ERPNext-Production.ova'))
-				os.symlink(os.path.join(PUBLIC_DIR, file),
-					os.path.join(PUBLIC_DIR, 'ERPNext-Production.ova'))
-			else: # Develop
-				silent_remove(os.path.join(PUBLIC_DIR, 'ERPNext-Dev.ova'))
-				os.symlink(os.path.join(PUBLIC_DIR, file),
-					os.path.join(PUBLIC_DIR, 'ERPNext-Dev.ova'))
+		elif 'Vagrant' in file:
+			silent_remove(os.path.join(PUBLIC_DIR, 'ERPNext-Vagrant.box'))
+			os.symlink(os.path.join(PUBLIC_DIR, file),
+				os.path.join(PUBLIC_DIR, 'ERPNext-Vagrant.box'))
+		elif 'Production' in file:
+			silent_remove(os.path.join(PUBLIC_DIR, 'ERPNext-Production.ova'))
+			os.symlink(os.path.join(PUBLIC_DIR, file),
+				os.path.join(PUBLIC_DIR, 'ERPNext-Production.ova'))
+		else: # Develop
+			silent_remove(os.path.join(PUBLIC_DIR, 'ERPNext-Dev.ova'))
+			os.symlink(os.path.join(PUBLIC_DIR, file),
+				os.path.join(PUBLIC_DIR, 'ERPNext-Dev.ova'))
 
 def delete_old_vms():
 	silent_remove(os.path.join(PUBLIC_DIR, 'BACKUPS'), is_dir=True)
@@ -120,8 +119,8 @@ def move_current_vms():
 	for file in os.listdir(PUBLIC_DIR):
 		if file in NEW_FILES or file in SYMLINKS or file == 'BACKUPS':
 			continue
-		src  = os.path.join(PUBLIC_DIR, '{}'.format(file))
-		dest = os.path.join(PUBLIC_DIR, 'BACKUPS/{}'.format(file))
+		src = os.path.join(PUBLIC_DIR, f'{file}')
+		dest = os.path.join(PUBLIC_DIR, f'BACKUPS/{file}')
 		os.rename(src, dest)
 
 if __name__ == "__main__":

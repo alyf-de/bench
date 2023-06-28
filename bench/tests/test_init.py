@@ -197,12 +197,8 @@ class TestBenchInit(unittest.TestCase):
 
 		if not archived_sites_path:
 			archived_sites_path = os.path.join(bench_path, 'archived_sites')
-			self.assertTrue(os.path.exists(archived_sites_path))
-			self.assertTrue(os.path.exists(os.path.join(archived_sites_path, site_name)))
-
-		else:
-			self.assertTrue(os.path.exists(archived_sites_path))
-			self.assertTrue(os.path.exists(os.path.join(archived_sites_path, site_name)))
+		self.assertTrue(os.path.exists(archived_sites_path))
+		self.assertTrue(os.path.exists(os.path.join(archived_sites_path, site_name)))
 
 	def assert_folders(self, bench_name):
 		for folder in bench.utils.folders_in_bench:

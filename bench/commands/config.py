@@ -6,13 +6,12 @@ from bench.config.common_site_config import update_config
 @click.group()
 def config():
 	"change bench configuration"
-	pass
 
 @click.command('auto_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_auto_update(state):
 	"Enable/Disable auto update for bench"
-	state = True if state == 'on' else False
+	state = state == 'on'
 	update_config({'auto_update': state})
 
 
@@ -20,21 +19,21 @@ def config_auto_update(state):
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_supervisor_on_update(state):
 	"Enable/Disable auto restart of supervisor processes"
-	state = True if state == 'on' else False
+	state = state == 'on'
 	update_config({'restart_supervisor_on_update': state})
 
 @click.command('restart_systemd_on_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_restart_systemd_on_update(state):
 	"Enable/Disable auto restart of systemd units"
-	state = True if state == 'on' else False
+	state = state == 'on'
 	update_config({'restart_systemd_on_update': state})
 
 @click.command('update_bench_on_update')
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_update_bench_on_update(state):
 	"Enable/Disable bench updates on running bench update"
-	state = True if state == 'on' else False
+	state = state == 'on'
 	update_config({'update_bench_on_update': state})
 
 
@@ -42,7 +41,7 @@ def config_update_bench_on_update(state):
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_dns_multitenant(state):
 	"Enable/Disable bench updates on running bench update"
-	state = True if state == 'on' else False
+	state = state == 'on'
 	update_config({'dns_multitenant': state})
 
 
@@ -50,7 +49,7 @@ def config_dns_multitenant(state):
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_serve_default_site(state):
 	"Configure nginx to serve the default site on port 80"
-	state = True if state == 'on' else False
+	state = state == 'on'
 	update_config({'serve_default_site': state})
 
 
@@ -58,7 +57,7 @@ def config_serve_default_site(state):
 @click.argument('state', type=click.Choice(['on', 'off']))
 def config_rebase_on_pull(state):
 	"Rebase repositories on pulling"
-	state = True if state == 'on' else False
+	state = state == 'on'
 	update_config({'rebase_on_pull': state})
 
 

@@ -7,7 +7,7 @@ def execute(bench_path):
 	frappe_branch = get_current_branch('frappe', bench_path)
 	frappe_version = get_current_frappe_version(bench_path)
 
-	if not (frappe_branch=='develop' or frappe_version >= 7):
+	if frappe_branch != 'develop' and frappe_version < 7:
 		# not version 7+
 		# prevent running this patch
 		return False

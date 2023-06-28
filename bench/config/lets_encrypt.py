@@ -15,7 +15,7 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 
 	site_path = os.path.join(bench_path, "sites", site, "site_config.json")
 	if not os.path.exists(os.path.dirname(site_path)):
-		print("No site named "+site)
+		print(f"No site named {site}")
 		return
 
 	if custom_domain:
@@ -25,7 +25,7 @@ def setup_letsencrypt(site, custom_domain, bench_path, interactive):
 				print("SSL for Domain {0} already exists".format(custom_domain))
 				return
 
-		if not custom_domain in domains:
+		if custom_domain not in domains:
 			print("No custom domain named {0} set for site".format(custom_domain))
 			return
 

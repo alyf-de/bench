@@ -65,7 +65,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 	conf = get_config(bench_path=bench_path)
 	version_upgrade = is_version_upgrade(bench_path=bench_path)
 
-	if version_upgrade[0] or (not version_upgrade[0] and force):
+	if version_upgrade[0] or force:
 		validate_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 
 	before_update(bench_path=bench_path, requirements=requirements)
@@ -84,7 +84,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		update_requirements(bench_path=bench_path)
 		update_node_packages(bench_path=bench_path)
 
-	if version_upgrade[0] or (not version_upgrade[0] and force):
+	if version_upgrade[0] or force:
 		pre_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 		import bench.utils, bench.app
 		print('Reloading bench...')
@@ -101,7 +101,7 @@ def _update(pull=False, patch=False, build=False, update_bench=False, auto=False
 		patch_sites(bench_path=bench_path)
 	if build:
 		build_assets(bench_path=bench_path)
-	if version_upgrade[0] or (not version_upgrade[0] and force):
+	if version_upgrade[0] or force:
 		post_upgrade(version_upgrade[1], version_upgrade[2], bench_path=bench_path)
 	if restart_supervisor or conf.get('restart_supervisor_on_update'):
 		restart_supervisor_processes(bench_path=bench_path)
@@ -125,7 +125,7 @@ def retry_upgrade(version):
 	post_upgrade(version-1, version)
 
 def restart_update(kwargs):
-	args = ['--'+k for k, v in list(kwargs.items()) if v]
+	args = [f'--{k}' for k, v in list(kwargs.items()) if v]
 	os.execv(sys.argv[0], sys.argv[:2] + args)
 
 @click.command('switch-to-branch')
@@ -136,7 +136,7 @@ def switch_to_branch(branch, apps, upgrade=False):
 	"Switch all apps to specified branch, or specify apps separated by space"
 	from bench.app import switch_to_branch
 	switch_to_branch(branch=branch, apps=list(apps), upgrade=upgrade)
-	print('Switched to ' + branch)
+	print(f'Switched to {branch}')
 	print('Please run `bench update --patch` to be safe from any differences in database schema')
 
 @click.command('switch-to-master')

@@ -86,11 +86,7 @@ def install_bench(args):
 
 	# Python executable
 	dist_name, dist_version = get_distribution_info()
-	if dist_name=='centos':
-		args.python = 'python3.6'
-	else:
-		args.python = 'python3'
-
+	args.python = 'python3.6' if dist_name=='centos' else 'python3'
 	# create user if not exists
 	extra_vars = vars(args)
 	extra_vars.update(frappe_user=args.user)
@@ -104,7 +100,7 @@ def install_bench(args):
 	extra_vars.update(repo_path=repo_path)
 	run_playbook('create_user.yml', extra_vars=extra_vars)
 
-	extra_vars.update(get_passwords(args))
+	extra_vars |= get_passwords(args)
 	if args.production:
 		extra_vars.update(max_worker_connections=multiprocessing.cpu_count() * 1024)
 
@@ -165,16 +161,14 @@ def get_distribution_info():
 		return "macos", current_dist[0].rsplit('.', 1)[0]
 
 def install_package(package):
-	package_exec = find_executable(package)
+	if package_exec := find_executable(package):
+		return
 
-	if not package_exec:
+	else:
 		success = run_os_command({
 			'apt-get': ['sudo apt-get install -y {0}'.format(package)],
 			'yum': ['sudo yum install -y {0}'.format(package)]
 		})
-	else:
-		return
-
 	if not success:
 		could_not_install(package)
 
@@ -207,12 +201,13 @@ def clone_bench_repo(args):
 	repo_url = args.repo_url or 'https://github.com/frappe/bench'
 
 
-	success = run_os_command(
-		{'git': 'git clone {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
-			repo_url=repo_url, bench_repo=clone_path, branch=branch)}
+	return run_os_command(
+		{
+			'git': 'git clone {repo_url} {bench_repo} --depth 1 --branch {branch}'.format(
+				repo_url=repo_url, bench_repo=clone_path, branch=branch
+			)
+		}
 	)
-
-	return success
 
 def run_os_command(command_map):
 	'''command_map is a dictionary of {'executable': command}. For ex. {'apt-get': 'sudo apt-get install -y python2.7'} '''
@@ -245,7 +240,9 @@ def get_passwords(args):
 
 	ignore_prompt = args.run_travis or args.without_bench_setup
 	mysql_root_password, admin_password = '', ''
-	passwords_file_path = os.path.join(os.path.expanduser('~' + args.user), 'passwords.txt')
+	passwords_file_path = os.path.join(
+		os.path.expanduser(f'~{args.user}'), 'passwords.txt'
+	)
 
 	if not ignore_prompt:
 		# set passwords from existing passwords.txt
@@ -307,7 +304,7 @@ def get_extra_vars_json(extra_args):
 	with open(json_path, mode='w') as j:
 		json.dump(extra_vars, j, indent=1, sort_keys=True)
 
-	return ('@' + json_path)
+	return f'@{json_path}'
 
 def run_playbook(playbook_name, sudo=False, extra_vars=None):
 	args = ['ansible-playbook', '-c', 'local',  playbook_name , '-vvvv']
@@ -324,8 +321,7 @@ def run_playbook(playbook_name, sudo=False, extra_vars=None):
 	else:
 		cwd = os.path.join(os.path.expanduser('~'), 'bench')
 
-	success = subprocess.check_call(args, cwd=os.path.join(cwd, 'playbooks'))
-	return success
+	return subprocess.check_call(args, cwd=os.path.join(cwd, 'playbooks'))
 
 def parse_commandline_args():
 	import argparse
@@ -403,9 +399,7 @@ def parse_commandline_args():
 		help='Use if you\'re creating inside LXC'
 	)
 
-	args = parser.parse_args()
-
-	return args
+	return parser.parse_args()
 
 if __name__ == '__main__':
 	args = parse_commandline_args()

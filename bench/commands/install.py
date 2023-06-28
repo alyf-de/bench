@@ -6,7 +6,6 @@ extra_vars = {"production": True}
 @click.group()
 def install():
 	"Install system dependancies"
-	pass
 
 @click.command('prerequisites')
 def install_prerequisites():

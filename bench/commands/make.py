@@ -29,7 +29,7 @@ def init(path, apps_path, frappe_path, frappe_branch, no_procfile, no_backups,
 			clone_without_update=clone_without_update,
 			ignore_exist = ignore_exist, skip_assets=skip_assets,
 			python 		 = python)
-	click.echo('Bench {} initialized'.format(path))
+	click.echo(f'Bench {path} initialized')
 
 @click.command('get-app')
 @click.argument('name', nargs=-1) # Dummy argument for backward compatibility

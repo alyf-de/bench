@@ -24,15 +24,16 @@ def make_nginx_conf(bench_path, yes=False):
 		"bench_name": bench_name,
 		"error_pages": get_error_pages(),
 		"allow_rate_limiting": allow_rate_limiting,
-		# for nginx map variable
-		"random_string": "".join(random.choice(string.ascii_lowercase) for i in range(7))
+		"random_string": "".join(
+			random.choice(string.ascii_lowercase) for _ in range(7)
+		),
 	}
 
 	if allow_rate_limiting:
-		template_vars.update({
+		template_vars |= {
 			'bench_name_hash': hashlib.sha256(bench_name).hexdigest()[:16],
-			'limit_conn_shared_memory': get_limit_conn_shared_memory()
-		})
+			'limit_conn_shared_memory': get_limit_conn_shared_memory(),
+		}
 
 	nginx_conf = template.render(**template_vars)
 
@@ -105,7 +106,7 @@ def prepare_sites(config, bench_path):
 	if not dns_multitenant:
 		for site in sites_configs:
 			if site.get("port"):
-				if not site["port"] in ports_in_use:
+				if site["port"] not in ports_in_use:
 					ports_in_use[site["port"]] = []
 				ports_in_use[site["port"]].append(site["name"])
 
@@ -143,21 +144,22 @@ def prepare_sites(config, bench_path):
 #			if site["port"] in ports_in_use:
 #				raise Exception("Port {0} is being used by another site {1}".format(site["port"], ports_in_use[site["port"]]))
 
-			if site["port"] in ports_in_use and not site["name"] in ports_in_use[site["port"]]:
+			if (
+				site["port"] in ports_in_use
+				and site["name"] not in ports_in_use[site["port"]]
+			):
 				shared_port_exception_found = True
-				ports_in_use[site["port"]].append(site["name"])
 			else:
 				ports_in_use[site["port"]] = []
-				ports_in_use[site["port"]].append(site["name"])
-
+			ports_in_use[site["port"]].append(site["name"])
 			sites["that_use_port"].append(site)
 
 
 	if not dns_multitenant and shared_port_exception_found:
 		message = "Port conflicts found:"
 		port_conflict_index = 0
-		for port_number in ports_in_use:
-			if len(ports_in_use[port_number]) > 1:
+		for port_number, value in ports_in_use.items():
+			if len(value) > 1:
 				port_conflict_index += 1
 				message += "\n{0} - Port {1} is shared among sites:".format(port_conflict_index,port_number)
 				for site_name in ports_in_use[port_number]:
@@ -166,9 +168,7 @@ def prepare_sites(config, bench_path):
 
 	if not dns_multitenant:
 		message = "Port configuration list:"
-		port_config_index = 0
 		for site in sites_configs:
-			port_config_index += 1
 			message += "\n\nSite {0} assigned port: {1}".format(site["name"], site["port"])
 
 		print(message)
@@ -190,18 +190,21 @@ def get_sites_with_config(bench_path):
 		try:
 			site_config = get_site_config(site, bench_path=bench_path)
 		except Exception as e:
-			strict_nginx = get_config(bench_path).get('strict_nginx')
-			if strict_nginx:
-				print("\n\nERROR: The site config for the site {} is broken.".format(site),
+			if strict_nginx := get_config(bench_path).get('strict_nginx'):
+				print(
+					f"\n\nERROR: The site config for the site {site} is broken.",
 					"If you want this command to pass, instead of just throwing an error,",
 					"You may remove the 'strict_nginx' flag from common_site_config.json or set it to 0",
-					"\n\n")
+					"\n\n",
+				)
 				raise (e)
 			else:
-				print("\n\nWARNING: The site config for the site {} is broken.".format(site),
+				print(
+					f"\n\nWARNING: The site config for the site {site} is broken.",
 					"If you want this command to fail, instead of just showing a warning,",
 					"You may add the 'strict_nginx' flag to common_site_config.json and set it to 1",
-					"\n\n")
+					"\n\n",
+				)
 				continue
 
 		ret.append({
@@ -214,7 +217,7 @@ def get_sites_with_config(bench_path):
 		if dns_multitenant and site_config.get('domains'):
 			for domain in site_config.get('domains'):
 				# domain can be a string or a dict with 'domain', 'ssl_certificate', 'ssl_certificate_key'
-				if isinstance(domain, str) or isinstance(domain, unicode):
+				if isinstance(domain, (str, unicode)):
 					domain = { 'domain': domain }
 
 				domain['name'] = site
@@ -245,11 +248,7 @@ def use_wildcard_certificate(bench_path, ret):
 	ssl_certificate_key = wildcard['ssl_certificate_key']
 
 	# If domain is set as "*" all domains will be included
-	if domain.startswith('*'):
-		domain = domain[1:]
-	else:
-		domain = '.' + domain
-
+	domain = domain[1:] if domain.startswith('*') else f'.{domain}'
 	for site in ret:
 		if site.get('ssl_certificate'):
 			continue

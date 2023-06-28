@@ -8,8 +8,9 @@ with open('requirements.txt') as f:
 	install_requires = f.read().strip().split('\n')
 
 with open('bench/__init__.py', 'rb') as f:
-	version = str(ast.literal_eval(_version_re.search(
-		f.read().decode('utf-8')).group(1)))
+	version = str(
+		ast.literal_eval(_version_re.search(f.read().decode('utf-8'))[1])
+	)
 
 setup(
 	name='bench',

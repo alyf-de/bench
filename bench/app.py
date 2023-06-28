@@ -76,7 +76,7 @@ def add_to_excluded_apps_txt(app, bench_path='.'):
 	if app == 'frappe':
 		raise ValueError('Frappe app cannot be excludeed from update')
 	if app not in os.listdir('apps'):
-		raise ValueError('The app {} does not exist'.format(app))
+		raise ValueError(f'The app {app} does not exist')
 	apps = get_excluded_apps(bench_path=bench_path)
 	if app not in apps:
 		apps.append(app)
@@ -114,7 +114,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 
 	#Gets repo name from URL
 	repo_name = git_url.rsplit('/', 1)[1].rsplit('.', 1)[0]
-	logger.info('getting app {}'.format(repo_name))
+	logger.info(f'getting app {repo_name}')
 	shallow_clone = '--depth 1' if check_git_for_shallow_clone() else ''
 	branch = '--branch {branch}'.format(branch=branch) if branch else ''
 
@@ -127,7 +127,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 	#Retrieves app name from setup.py
 	app_path = os.path.join(bench_path, 'apps', repo_name, 'setup.py')
 	with open(app_path, 'rb') as f:
-		app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8')).group(1)
+		app_name = re.search(r'name\s*=\s*[\'"](.*)[\'"]', f.read().decode('utf-8'))[1]
 		if repo_name != app_name:
 			apps_path = os.path.join(os.path.abspath(bench_path), 'apps')
 			os.rename(os.path.join(apps_path, repo_name), os.path.join(apps_path, app_name))
@@ -149,7 +149,7 @@ def get_app(git_url, branch=None, bench_path='.', build_asset_files=True, verbos
 def new_app(app, bench_path='.'):
 	# For backwards compatibility
 	app = app.lower().replace(" ", "_").replace("-", "_")
-	logger.info('creating new app {}'.format(app))
+	logger.info(f'creating new app {app}')
 	apps = os.path.abspath(os.path.join(bench_path, 'apps'))
 	bench.set_frappe_version(bench_path=bench_path)
 
@@ -161,7 +161,7 @@ def new_app(app, bench_path='.'):
 	install_app(app, bench_path=bench_path)
 
 def install_app(app, bench_path=".", verbose=False, no_cache=False):
-	logger.info("installing {}".format(app))
+	logger.info(f"installing {app}")
 
 	pip_path = os.path.join(bench_path, "env", "bin", "pip")
 	quiet_flag = "-q" if not verbose else ""
@@ -172,7 +172,7 @@ def install_app(app, bench_path=".", verbose=False, no_cache=False):
 	add_to_appstxt(app, bench_path=bench_path)
 
 def remove_app(app, bench_path='.'):
-	if not app in get_apps(bench_path):
+	if app not in get_apps(bench_path):
 		print("No app named {0}".format(app))
 		sys.exit(1)
 
@@ -206,7 +206,7 @@ def pull_all_apps(bench_path='.', reset=False):
 		for app in get_apps(bench_path=bench_path):
 			excluded_apps = get_excluded_apps()
 			if app in excluded_apps:
-				print("Skipping reset for app {}".format(app))
+				print(f"Skipping reset for app {app}")
 				continue
 			app_dir = get_repo_dir(app, bench_path=bench_path)
 			if os.path.exists(os.path.join(app_dir, '.git')):
@@ -229,7 +229,7 @@ Here are your choices:
 	excluded_apps = get_excluded_apps()
 	for app in get_apps(bench_path=bench_path):
 		if app in excluded_apps:
-			print("Skipping pull for app {}".format(app))
+			print(f"Skipping pull for app {app}")
 			continue
 		app_dir = get_repo_dir(app, bench_path=bench_path)
 		if os.path.exists(os.path.join(app_dir, '.git')):
@@ -237,7 +237,9 @@ Here are your choices:
 			if not remote:
 				# remote is False, i.e. remote doesn't exist, add the app to excluded_apps.txt
 				add_to_excluded_apps_txt(app, bench_path=bench_path)
-				print("Skipping pull for app {}, since remote doesn't exist, and adding it to excluded apps".format(app))
+				print(
+					f"Skipping pull for app {app}, since remote doesn't exist, and adding it to excluded apps"
+				)
 				continue
 			logger.info('pulling {0}'.format(app))
 			if reset:
@@ -360,7 +362,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 					version_upgrade = is_version_upgrade(app=app, bench_path=bench_path, branch=branch)
 					if version_upgrade[0] and not upgrade:
 						raise MajorVersionUpgradeException("Switching to {0} will cause upgrade from {1} to {2}. Pass --upgrade to confirm".format(branch, version_upgrade[1], version_upgrade[2]), version_upgrade[1], version_upgrade[2])
-				print("Switching for "+app)
+				print(f"Switching for {app}")
 				unshallow = "--unshallow" if os.path.exists(os.path.join(app_dir, ".git", "shallow")) else ""
 				exec_cmd("git config --unset-all remote.upstream.fetch", cwd=app_dir)
 				exec_cmd("git config --add remote.upstream.fetch '+refs/heads/*:refs/remotes/upstream/*'", cwd=app_dir)
@@ -371,7 +373,7 @@ def switch_branch(branch, apps=None, bench_path='.', upgrade=False, check_upgrad
 			except CommandFailedError:
 				print("Error switching to branch {0} for {1}".format(branch, app))
 			except InvalidRemoteException:
-				print("Remote does not exist for app "+app)
+				print(f"Remote does not exist for app {app}")
 			except InvalidBranchException:
 				print("Branch {0} does not exist in Upstream for {1}".format(branch, app))
 
@@ -404,7 +406,7 @@ def switch_to_develop(apps=None, bench_path='.', upgrade=True):
 def get_version_from_string(contents, field='__version__'):
 	match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % field,
 			contents)
-	return match.group(2)
+	return match[2]
 
 def get_major_version(version):
 	return semantic_version.Version(version).major

@@ -5,7 +5,6 @@ import os
 @click.group()
 def setup():
 	"Setup bench"
-	pass
 
 @click.command('sudoers')
 @click.argument('user')
@@ -112,9 +111,10 @@ def set_ssh_port(port, force=False):
 	from bench.utils import run_playbook
 
 	if not force:
-		click.confirm('This will change your SSH Port to {}\n'
-			'Do you want to continue?'.format(port),
-			abort=True)
+		click.confirm(
+			f'This will change your SSH Port to {port}\nDo you want to continue?',
+			abort=True,
+		)
 
 	run_playbook('roles/bench/tasks/change_ssh_port.yml', {"ssh_port": port})
 
@@ -280,9 +280,7 @@ def setup_roles(role, **kwargs):
 	"Install dependancies via roles"
 	from bench.utils import run_playbook
 
-	extra_vars = {"production": True}
-	extra_vars.update(kwargs)
-
+	extra_vars = {"production": True} | kwargs
 	if role:
 		run_playbook('site.yml', extra_vars=extra_vars, tag=role)
 	else:

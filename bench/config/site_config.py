@@ -58,7 +58,7 @@ def add_domain(site, domain, ssl_certificate, ssl_certificate_key, bench_path='.
 
 def remove_domain(site, domain, bench_path='.'):
 	domains = get_domains(site, bench_path)
-	for i, d in enumerate(domains):
+	for d in domains:
 		if (isinstance(d, dict) and d['domain']==domain) or d==domain:
 			domains.remove(d)
 			break

@@ -128,7 +128,10 @@ def shell(bench_path='.'):
 		print("sites dir doesn't exist")
 		sys.exit(1)
 	env = copy.copy(os.environ)
-	env['PS1'] = '(' + os.path.basename(os.path.dirname(os.path.abspath(__file__))) + ')' + env.get('PS1', '')
+	env['PS1'] = (
+		f'({os.path.basename(os.path.dirname(os.path.abspath(__file__)))})'
+		+ env.get('PS1', '')
+	)
 	env['PATH'] = os.path.dirname(os.path.abspath(os.path.join('env','bin')) + ':' + env['PATH'])
 	os.chdir('sites')
 	os.execve(env['SHELL'], [env['SHELL']], env)
@@ -139,7 +142,7 @@ def shell(bench_path='.'):
 def backup_site(site):
 	"backup site"
 	from bench.utils import get_sites, backup_site
-	if not site in get_sites(bench_path='.'):
+	if site not in get_sites(bench_path='.'):
 		print('site not found')
 		sys.exit(1)
 	backup_site(site, bench_path='.')

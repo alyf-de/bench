@@ -93,7 +93,7 @@ def bump(bench_path, app, bump_type, from_branch, to_branch, remote, owner, repo
 	commit_changes(repo_path, new_version, to_branch)
 	tag_name = create_release(repo_path, new_version, from_branch=from_branch, to_branch=to_branch, frontport=frontport)
 	push_release(repo_path, from_branch=from_branch, to_branch=to_branch, remote=remote)
-	prerelease = True if 'beta' in new_version else False
+	prerelease = 'beta' in new_version
 	create_github_release(repo_path, tag_name, message, remote=remote, owner=owner, repo_name=repo_name, prerelease=prerelease)
 	print('Released {tag} for {repo_path}'.format(tag=tag_name, repo_path=repo_path))
 
@@ -109,28 +109,31 @@ def update_branches_and_check_for_changelog(repo_path, from_branch, to_branch, r
 	check_for_unmerged_changelog(repo_path)
 
 def update_branch(repo_path, branch, remote):
-	print("updating local branch of", repo_path, 'using', remote + '/' + branch)
+	print("updating local branch of", repo_path, 'using', f'{remote}/{branch}')
 
 	repo = git.Repo(repo_path)
 	g = repo.git
 	g.fetch(remote)
 	g.checkout(branch)
-	g.reset('--hard', remote+'/'+branch)
+	g.reset('--hard', f'{remote}/{branch}')
 
 def check_for_unmerged_changelog(repo_path):
 	current = os.path.join(repo_path, os.path.basename(repo_path), 'change_log', 'current')
 	if os.path.exists(current) and [f for f in os.listdir(current) if f != "readme.md"]:
-		raise Exception("Unmerged change log! in " + repo_path)
+		raise Exception(f"Unmerged change log! in {repo_path}")
 
 def get_release_message(repo_path, from_branch, to_branch, remote='upstream'):
 	print('getting release message for', repo_path, 'comparing', to_branch, '...', from_branch)
 
 	repo = git.Repo(repo_path)
 	g = repo.git
-	log = g.log('{remote}/{to_branch}..{remote}/{from_branch}'.format(
-		remote=remote, to_branch=to_branch, from_branch=from_branch), '--format=format:%s', '--no-merges')
-
-	if log:
+	if log := g.log(
+		'{remote}/{to_branch}..{remote}/{from_branch}'.format(
+			remote=remote, to_branch=to_branch, from_branch=from_branch
+		),
+		'--format=format:%s',
+		'--no-merges',
+	):
 		return "* " + log.replace('\n', '\n* ')
 
 def bump_repo(repo_path, bump_type, from_branch, to_branch):
@@ -156,7 +159,7 @@ def get_current_version(repo_path, to_branch):
 		contents = f.read()
 		match = re.search(r"^(\s*%s\s*=\s*['\\\"])(.+?)(['\"])(?sm)" % version_key,
 				contents)
-		return match.group(2)
+		return match[2]
 
 def get_bumped_version(version, bump_type):
 	v = semantic_version.Version(version)
@@ -248,7 +251,7 @@ def commit_changes(repo_path, new_version, to_branch):
 	else:
 		repo.index.add([os.path.join(app_name, 'hooks.py')])
 
-	repo.index.commit('bumped to version {}'.format(new_version))
+	repo.index.commit(f'bumped to version {new_version}')
 
 def create_release(repo_path, new_version, from_branch, to_branch, frontport=True):
 	print('creating release for version', new_version)
@@ -260,8 +263,8 @@ def create_release(repo_path, new_version, from_branch, to_branch, frontport=Tru
 	except git.exc.GitCommandError as e:
 		handle_merge_error(e, source=from_branch, target=to_branch)
 
-	tag_name = 'v' + new_version
-	repo.create_tag(tag_name, message='Release {}'.format(new_version))
+	tag_name = f'v{new_version}'
+	repo.create_tag(tag_name, message=f'Release {new_version}')
 	g.checkout(from_branch)
 
 	try:
@@ -271,7 +274,7 @@ def create_release(repo_path, new_version, from_branch, to_branch, frontport=Tru
 
 	if frontport:
 		for branch in branches_to_update[from_branch]:
-			print ("Front porting changes to {}".format(branch))
+			print(f"Front porting changes to {branch}")
 			print('merging {0} into'.format(to_branch), branch)
 			g.checkout(branch)
 			try:
@@ -322,10 +325,10 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 	data = {
 		'tag_name': tag_name,
 		'target_commitish': 'master',
-		'name': 'Release ' + tag_name,
+		'name': f'Release {tag_name}',
 		'body': message,
 		'draft': False,
-		'prerelease': prerelease
+		'prerelease': prerelease,
 	}
 	for i in range(3):
 		try:
@@ -337,11 +340,10 @@ def create_github_release(repo_path, tag_name, message, remote='upstream', owner
 		except requests.exceptions.HTTPError:
 			print('request failed, retrying....')
 			sleep(3*i + 1)
-			if i !=2:
+			if i != 2:
 				continue
-			else:
-				print(r.json())
-				raise
+			print(r.json())
+			raise
 	return r
 
 def push_branch_for_old_major_version(bench_path, bump_type, app, repo_path, from_branch, to_branch, remote, owner):

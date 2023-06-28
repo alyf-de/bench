@@ -30,16 +30,18 @@ def generate_systemd_config(bench_path, user=None, yes=False,
 		return
 
 	number_of_workers = config.get('background_workers') or 1
-	background_workers = []
-	for i in range(number_of_workers):
-		background_workers.append(get_bench_name(bench_path) + "-frappe-default-worker@" + str(i+1) + ".service")
-
-	for i in range(number_of_workers):
-		background_workers.append(get_bench_name(bench_path) + "-frappe-short-worker@" + str(i+1) + ".service")
-
-	for i in range(number_of_workers):
-		background_workers.append(get_bench_name(bench_path) + "-frappe-long-worker@" + str(i+1) + ".service")
-
+	background_workers = [
+		f"{get_bench_name(bench_path)}-frappe-default-worker@{str(i + 1)}.service"
+		for i in range(number_of_workers)
+	]
+	background_workers.extend(
+		f"{get_bench_name(bench_path)}-frappe-short-worker@{str(i + 1)}.service"
+		for i in range(number_of_workers)
+	)
+	background_workers.extend(
+		f"{get_bench_name(bench_path)}-frappe-long-worker@{str(i + 1)}.service"
+		for i in range(number_of_workers)
+	)
 	bench_info = {
 		"bench_dir": bench_dir,
 		"sites_dir": os.path.join(bench_dir, 'sites'),
@@ -202,19 +204,18 @@ def _delete_symlinks(bench_path):
 
 def get_unit_files(bench_path):
 	bench_name = get_bench_name(bench_path)
-	unit_files = [
+	return [
 		[bench_name, ".target"],
-		[bench_name+"-workers", ".target"],
-		[bench_name+"-web", ".target"],
-		[bench_name+"-redis", ".target"],
-		[bench_name+"-frappe-default-worker@", ".service"],
-		[bench_name+"-frappe-short-worker@", ".service"],
-		[bench_name+"-frappe-long-worker@", ".service"],
-		[bench_name+"-frappe-schedule", ".service"],
-		[bench_name+"-frappe-web", ".service"],
-		[bench_name+"-node-socketio", ".service"],
-		[bench_name+"-redis-cache", ".service"],
-		[bench_name+"-redis-queue", ".service"],
-		[bench_name+"-redis-socketio", ".service"],
+		[f"{bench_name}-workers", ".target"],
+		[f"{bench_name}-web", ".target"],
+		[f"{bench_name}-redis", ".target"],
+		[f"{bench_name}-frappe-default-worker@", ".service"],
+		[f"{bench_name}-frappe-short-worker@", ".service"],
+		[f"{bench_name}-frappe-long-worker@", ".service"],
+		[f"{bench_name}-frappe-schedule", ".service"],
+		[f"{bench_name}-frappe-web", ".service"],
+		[f"{bench_name}-node-socketio", ".service"],
+		[f"{bench_name}-redis-cache", ".service"],
+		[f"{bench_name}-redis-queue", ".service"],
+		[f"{bench_name}-redis-socketio", ".service"],
 	]
-	return unit_files

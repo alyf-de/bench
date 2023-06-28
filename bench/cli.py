@@ -66,8 +66,7 @@ def change_dir():
 
 def change_uid():
 	if is_root() and not cmd_requires_root():
-		frappe_user = get_config(".").get('frappe_user')
-		if frappe_user:
+		if frappe_user := get_config(".").get('frappe_user'):
 			drop_privileges(uid_name=frappe_user, gid_name=frappe_user)
 			os.environ['HOME'] = pwd.getpwnam(frappe_user).pw_dir
 		else:

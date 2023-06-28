@@ -10,10 +10,10 @@ except ImportError:
 def generate_config(bench_path):
 	config = get_config(bench_path)
 
-	ports = {}
-	for key in ('redis_cache', 'redis_queue', 'redis_socketio'):
-		ports[key] = urlparse(config[key]).port
-
+	ports = {
+		key: urlparse(config[key]).port
+		for key in ('redis_cache', 'redis_queue', 'redis_socketio')
+	}
 	write_redis_config(
 		template_name='redis_queue.conf',
 		context={

@@ -4,10 +4,7 @@ from distutils.spawn import find_executable
 
 def execute(bench_path):
 	expected_node_ver = Version('5.0.0')
-	node_exec = find_executable('node') or find_executable('nodejs')
-
-
-	if node_exec:
+	if node_exec := find_executable('node') or find_executable('nodejs'):
 		result = subprocess.check_output([node_exec, '-v']).decode()
 	else:
 		click.echo('''

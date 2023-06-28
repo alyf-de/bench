@@ -101,8 +101,7 @@ def make_ports(bench_path):
 	# new port value = max of existing port value + 1
 	ports = {}
 	for key, value in list(default_ports.items()):
-		existing_value = existing_ports.get(key, [])
-		if existing_value:
+		if existing_value := existing_ports.get(key, []):
 			value = max(existing_value) + 1
 
 		ports[key] = value
